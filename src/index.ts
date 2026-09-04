@@ -8,7 +8,6 @@ import * as Blockly from 'blockly';
 import {blocks} from './blocks/text';
 import {forBlock} from './generators/javascript';
 import {javascriptGenerator} from 'blockly/javascript';
-import {save, load} from './serialization';
 import {toolbox} from './toolbox';
 import './index.css';
 
@@ -45,17 +44,7 @@ const runCode = () => {
 };
 
 if (ws) {
-  // Load the initial state from storage and run the code.
-  load(ws);
   runCode();
-
-  // Every time the workspace changes state, save the changes to storage.
-  ws.addChangeListener((e: Blockly.Events.Abstract) => {
-    // UI events are things like scrolling, zooming, etc.
-    // No need to save after one of these.
-    if (e.isUiEvent) return;
-    save(ws);
-  });
 
   // Whenever the workspace changes meaningfully, run the code again.
   ws.addChangeListener((e: Blockly.Events.Abstract) => {

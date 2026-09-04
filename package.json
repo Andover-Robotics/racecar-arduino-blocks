@@ -1,13 +1,12 @@
 {
   "name": "racecar-arduino-blocks",
   "version": "13.2.0",
-  "description": "A sample app using Blockly",
-  "main": "index.js",
+  "description": "A Blockly-based Electron app",
+  "main": "electron/main.js",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --mode production",
-    "start": "webpack serve --open --mode development"
+    "build": "node scripts/build.mjs",
+    "start": "npm run build && electron ."
   },
   "keywords": [
     "blockly"
@@ -15,15 +14,9 @@
   "author": "",
   "license": "Apache-2.0",
   "devDependencies": {
-    "css-loader": "^7.1.4",
-    "html-webpack-plugin": "^5.6.7",
-    "source-map-loader": "^5.0.0",
-    "style-loader": "^4.0.0",
-    "ts-loader": "^9.6.1",
-    "typescript": "^6.0.3",
-    "webpack": "^5.107.2",
-    "webpack-cli": "^7.0.3",
-    "webpack-dev-server": "^5.2.5"
+    "electron": "^37.2.6",
+    "esbuild": "^0.25.9",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "blockly": "^13.2.0"
