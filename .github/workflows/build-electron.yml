@@ -35,7 +35,7 @@ jobs:
           RELEASE_VERSION: ${{ inputs.version }}
         run: npm version $env:RELEASE_VERSION --no-git-tag-version
       - name: Package Windows app
-        run: npm run package:windows
+        run: npm run package:windows -- --publish never
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v7
         with:
@@ -63,7 +63,7 @@ jobs:
           RELEASE_VERSION: ${{ inputs.version }}
         run: npm version "$RELEASE_VERSION" --no-git-tag-version
       - name: Package Linux app
-        run: npm run package:linux
+        run: npm run package:linux -- --publish never
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v7
         with:
