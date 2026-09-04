@@ -6,14 +6,13 @@
 
 import * as Blockly from 'blockly';
 import {blocks} from './blocks/text';
-import {forBlock} from './generators/javascript';
-import {javascriptGenerator} from 'blockly/javascript';
+import {arduinoGenerator, forBlock} from './generators/arduino';
 import {toolbox} from './toolbox';
 import './index.css';
 
 // Register the blocks and generator with Blockly
 Blockly.common.defineBlocks(blocks);
-Object.assign(javascriptGenerator.forBlock, forBlock);
+Object.assign(arduinoGenerator.forBlock, forBlock);
 
 // Set up UI elements and inject Blockly
 const codeDiv = document.getElementById('generatedCode')?.firstChild;
@@ -25,21 +24,16 @@ if (!blocklyDiv) {
 }
 const ws = Blockly.inject(blocklyDiv, {toolbox});
 
-// This function resets the code and output divs, shows the
-// generated code from the workspace, and evals the code.
-// In a real application, you probably shouldn't use `eval`.
+// This function shows the Arduino sketch generated from the workspace.
 const runCode = () => {
-  const code = javascriptGenerator.workspaceToCode(ws as Blockly.Workspace);
-  if (codeDiv) codeDiv.textContent = code;
-
-  if (outputDiv) outputDiv.innerHTML = '';
-
-  // Wrap `eval` in a `try/catch` so that any runtime errors are
-  // logged to the console, instead of failing quietly.
   try {
-    eval(code);
+    const code = arduinoGenerator.workspaceToCode(ws as Blockly.Workspace);
+    if (codeDiv) codeDiv.textContent = code;
   } catch (error) {
-    console.log(error);
+    // A toolbox can contain blocks whose Arduino generator has not been
+    // implemented yet. Do not let that error escape Blockly's event handler:
+    // an uncaught change-listener error prevents later toolbox interactions.
+    console.error('Could not generate Arduino code for the workspace.', error);
   }
 };
 

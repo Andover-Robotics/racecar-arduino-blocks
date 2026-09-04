@@ -5,8 +5,7 @@
  */
 
 /*
-This toolbox contains nearly every single built-in block that Blockly offers,
-in addition to the custom block 'add_text' this sample app adds.
+This toolbox contains nearly every single built-in block that Blockly offers.
 You probably don't need every single block, and should consider either rewriting
 your toolbox from scratch, or carefully choosing whether you need each block
 listed here.
@@ -15,6 +14,81 @@ listed here.
 export const toolbox = {
   kind: 'categoryToolbox',
   contents: [
+    {
+      kind: 'category',
+      name: 'Arduino',
+      colour: '#5b67a5',
+      contents: [
+        {
+          kind: 'block',
+          type: 'arduino_setup',
+        },
+        {
+          kind: 'block',
+          type: 'arduino_pin_mode',
+          inputs: {PIN: {shadow: {type: 'math_number', fields: {NUM: 13}}}},
+        },
+        {
+          kind: 'block',
+          type: 'arduino_digital_write',
+          inputs: {PIN: {shadow: {type: 'math_number', fields: {NUM: 13}}}},
+        },
+        {
+          kind: 'block',
+          type: 'arduino_digital_read',
+          inputs: {PIN: {shadow: {type: 'math_number', fields: {NUM: 13}}}},
+        },
+        {
+          kind: 'block',
+          type: 'arduino_analog_write',
+          inputs: {
+            PIN: {shadow: {type: 'math_number', fields: {NUM: 9}}},
+            VALUE: {shadow: {type: 'math_number', fields: {NUM: 128}}},
+          },
+        },
+        {
+          kind: 'block',
+          type: 'arduino_analog_read',
+          inputs: {PIN: {shadow: {type: 'math_number', fields: {NUM: 0}}}},
+        },
+        {
+          kind: 'block',
+          type: 'arduino_delay',
+          inputs: {TIME: {shadow: {type: 'math_number', fields: {NUM: 1000}}}},
+        },
+        {
+          kind: 'block',
+          type: 'arduino_millis',
+        },
+        {
+          kind: 'block',
+          type: 'arduino_delay_microseconds',
+          inputs: {TIME: {shadow: {type: 'math_number', fields: {NUM: 1000}}}},
+        },
+        {
+          kind: 'block',
+          type: 'arduino_micros',
+        },
+        {
+          kind: 'block',
+          type: 'text_join',
+          inputs: {
+            ADD0: {shadow: {type: 'arduino_serial_string'}},
+            ADD1: {shadow: {type: 'arduino_serial_string'}},
+          },
+        },
+        {
+          kind: 'block',
+          type: 'arduino_serial_print',
+          inputs: {VALUE: {shadow: {type: 'arduino_serial_string'}}},
+        },
+        {
+          kind: 'block',
+          type: 'arduino_serial_println',
+          inputs: {VALUE: {shadow: {type: 'arduino_serial_string'}}},
+        },
+      ],
+    },
     {
       kind: 'category',
       name: 'Logic',
@@ -39,10 +113,6 @@ export const toolbox = {
         {
           kind: 'block',
           type: 'logic_boolean',
-        },
-        {
-          kind: 'block',
-          type: 'logic_null',
         },
         {
           kind: 'block',
@@ -102,10 +172,6 @@ export const toolbox = {
               },
             },
           },
-        },
-        {
-          kind: 'block',
-          type: 'controls_forEach',
         },
         {
           kind: 'block',
@@ -181,7 +247,7 @@ export const toolbox = {
         },
         {
           kind: 'block',
-          type: 'math_number_property',
+          type: 'arduino_number_property',
           inputs: {
             NUMBER_TO_CHECK: {
               shadow: {
@@ -208,13 +274,6 @@ export const toolbox = {
                 },
               },
             },
-          },
-        },
-        {
-          kind: 'block',
-          type: 'math_on_list',
-          fields: {
-            OP: 'SUM',
           },
         },
         {
@@ -491,20 +550,6 @@ export const toolbox = {
             },
           },
         },
-        {
-          kind: 'block',
-          type: 'add_text',
-          inputs: {
-            TEXT: {
-              shadow: {
-                type: 'text',
-                fields: {
-                  TEXT: 'abc',
-                },
-              },
-            },
-          },
-        },
       ],
     },
     {
@@ -625,5 +670,9 @@ export const toolbox = {
       categorystyle: 'procedure_category',
       custom: 'PROCEDURE',
     },
-  ],
+  ].filter( // TODO: Add support for the Text and Lists categories
+    (item) =>
+      !('name' in item) ||
+      (item.name !== 'Text' && item.name !== 'Lists'),
+  ),
 };
