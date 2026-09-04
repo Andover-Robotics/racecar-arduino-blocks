@@ -1,0 +1,50 @@
+name: Build Electron app
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Windows installer
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install
+      - name: Package Windows app
+        run: npm run package:windows
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: racecar-arduino-blocks-windows
+          path: release/*.exe
+          if-no-files-found: error
+
+  build-linux:
+    name: Linux AppImage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install
+      - name: Package Linux app
+        run: npm run package:linux
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: racecar-arduino-blocks-linux
+          path: release/*.AppImage
+          if-no-files-found: error

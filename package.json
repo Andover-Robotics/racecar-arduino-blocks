@@ -6,7 +6,9 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build.mjs",
-    "start": "npm run build && electron ."
+    "start": "npm run build && electron .",
+    "package:linux": "npm run build && electron-builder --linux AppImage --x64",
+    "package:windows": "npm run build && electron-builder --win nsis --x64"
   },
   "keywords": [
     "blockly"
@@ -16,7 +18,26 @@
   "devDependencies": {
     "electron": "^37.2.6",
     "esbuild": "^0.25.9",
+    "electron-builder": "^26.0.12",
     "typescript": "^6.0.3"
+  },
+  "build": {
+    "appId": "com.racecararduinoblocks.app",
+    "productName": "Racecar Arduino Blocks",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "target": ["AppImage"]
+    },
+    "win": {
+      "target": ["nsis"]
+    }
   },
   "dependencies": {
     "blockly": "^13.2.0"
