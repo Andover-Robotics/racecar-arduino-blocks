@@ -105,10 +105,10 @@ mathGenerators['math_number_property'] = function (
   const property = block.getFieldValue('PROPERTY');
   const number = value(block, generator, 'NUMBER_TO_CHECK');
   if (property === 'EVEN') {
-    return ['((long)(' + number + ') % 2 == 0)', Order.EQUALITY];
+    return ['fmod(' + number + ', 2) == 0', Order.EQUALITY];
   }
   if (property === 'ODD') {
-    return ['((long)(' + number + ') % 2 != 0)', Order.EQUALITY];
+    return ['fabs(fmod(' + number + ', 2)) == 1', Order.EQUALITY];
   }
   if (property === 'WHOLE') {
     return ['floor(' + number + ') == (' + number + ')', Order.EQUALITY];
