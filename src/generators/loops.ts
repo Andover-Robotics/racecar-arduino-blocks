@@ -8,7 +8,10 @@ loopGenerators['controls_repeat_ext'] = function (
   generator: ArduinoCodeGenerator,
 ) {
   const repeats = value(block, generator, 'TIMES');
-  const loopVar = 'count_' + block.id.replace(/\W/g, '').slice(0, 8);
+  const loopVar = generator.nameDB_!.getDistinctName(
+    'count',
+    Blockly.Names.NameType.VARIABLE,
+  );
   const branch = generator.addLoopTrap(generator.statementToCode(block, 'DO'), block);
   return (
     'for (long ' + loopVar + ' = 0; ' + loopVar + ' < ' + repeats + '; ' +
