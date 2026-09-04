@@ -1,35 +1,61 @@
 name: Release Electron app
 
 on:
-  pull_request:
+  push:
     branches:
       - master
-    types:
-      - closed
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic version to publish
+        required: true
+        type: string
+      source_ref:
+        description: Commit or ref to release
+        required: false
+        default: master
+        type: string
 
 concurrency:
-  group: release-pr-${{ github.event.pull_request.number }}
+  group: release-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
   detect-version:
     name: Detect release version
-    if: github.event.pull_request.merged == true
+    if: github.ref_name == 'master'
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: read
     outputs:
       version: ${{ steps.version.outputs.version }}
+      source_ref: ${{ steps.version.outputs.source_ref }}
     steps:
-      - name: Extract SemVer from pull request title
+      - name: Resolve release version and source
         id: version
         shell: bash
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MANUAL_VERSION: ${{ inputs.version }}
+          MANUAL_SOURCE_REF: ${{ inputs.source_ref }}
         run: |
           semver_pattern='(?<![0-9A-Za-z.+-])v?\K(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?![0-9A-Za-z.+-])'
-          version="$(grep -oP "$semver_pattern" <<< "$PR_TITLE" | head -n 1 || true)"
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            release_subject="$MANUAL_VERSION"
+            source_ref="$MANUAL_SOURCE_REF"
+          else
+            release_subject="$(gh api \
+              -H 'Accept: application/vnd.github+json' \
+              "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+              --jq 'map(select(.merged_at != null)) | first | .title // ""')"
+            source_ref="$GITHUB_SHA"
+          fi
+
+          version="$(grep -oP "$semver_pattern" <<< "$release_subject" | head -n 1 || true)"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build release packages
@@ -37,7 +63,7 @@ jobs:
     if: needs.detect-version.outputs.version != ''
     uses: ./.github/workflows/build-electron.yml
     with:
-      source_ref: ${{ github.event.pull_request.merge_commit_sha }}
+      source_ref: ${{ needs.detect-version.outputs.source_ref }}
       version: ${{ needs.detect-version.outputs.version }}
     permissions:
       contents: read
@@ -60,7 +86,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          MERGE_SHA: ${{ needs.detect-version.outputs.source_ref }}
           RELEASE_VERSION: ${{ needs.detect-version.outputs.version }}
         run: |
           prerelease=()
@@ -69,6 +95,7 @@ jobs:
           fi
 
           gh release create "v$RELEASE_VERSION" release-assets/* \
+            --repo "$GITHUB_REPOSITORY" \
             --target "$MERGE_SHA" \
             --title "v$RELEASE_VERSION" \
             --generate-notes \
