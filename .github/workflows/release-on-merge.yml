@@ -31,71 +31,22 @@ jobs:
           version="${version#v}"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-  build-windows:
-    name: Build Windows release
+  build:
+    name: Build release packages
     needs: detect-version
     if: needs.detect-version.outputs.version != ''
-    runs-on: windows-latest
+    uses: ./.github/workflows/build-electron.yml
+    with:
+      source_ref: ${{ github.event.pull_request.merge_commit_sha }}
+      version: ${{ needs.detect-version.outputs.version }}
     permissions:
       contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-      - name: Install dependencies
-        run: npm install
-      - name: Set package version
-        shell: pwsh
-        env:
-          RELEASE_VERSION: ${{ needs.detect-version.outputs.version }}
-        run: npm version $env:RELEASE_VERSION --no-git-tag-version
-      - name: Package Windows app
-        run: npm run package:windows
-      - name: Upload Windows build
-        uses: actions/upload-artifact@v7
-        with:
-          name: windows-${{ needs.detect-version.outputs.version }}
-          path: release/*.exe
-          if-no-files-found: error
-
-  build-linux:
-    name: Build Linux release
-    needs: detect-version
-    if: needs.detect-version.outputs.version != ''
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-      - name: Install dependencies
-        run: npm install
-      - name: Set package version
-        env:
-          RELEASE_VERSION: ${{ needs.detect-version.outputs.version }}
-        run: npm version "$RELEASE_VERSION" --no-git-tag-version
-      - name: Package Linux app
-        run: npm run package:linux
-      - name: Upload Linux build
-        uses: actions/upload-artifact@v7
-        with:
-          name: linux-${{ needs.detect-version.outputs.version }}
-          path: release/*.AppImage
-          if-no-files-found: error
 
   publish-release:
     name: Publish GitHub Release
     needs:
       - detect-version
-      - build-windows
-      - build-linux
+      - build
     runs-on: ubuntu-latest
     permissions:
       contents: write

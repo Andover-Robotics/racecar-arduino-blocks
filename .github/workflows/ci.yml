@@ -1,0 +1,14 @@
+name: Electron CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Electron app
+    uses: ./.github/workflows/build-electron.yml
+    with:
+      source_ref: ${{ github.sha }}

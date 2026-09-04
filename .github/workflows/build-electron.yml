@@ -1,28 +1,39 @@
-name: Build Electron app
+name: Reusable Electron build
 
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      source_ref:
+        description: Git commit or ref to build
+        required: true
+        type: string
+      version:
+        description: Version to stamp into release packages
+        required: false
+        default: ''
+        type: string
 
-permissions:
-  contents: read
-
-
-env:
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   build-windows:
     name: Windows installer
     runs-on: windows-latest
-
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Install dependencies
         run: npm install
+      - name: Set package version
+        if: inputs.version != ''
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: npm version $env:RELEASE_VERSION --no-git-tag-version
       - name: Package Windows app
         run: npm run package:windows
       - name: Upload Windows artifact
@@ -35,14 +46,22 @@ jobs:
   build-linux:
     name: Linux AppImage
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref }}
       - uses: actions/setup-node@v7
         with:
           node-version: 24
       - name: Install dependencies
         run: npm install
+      - name: Set package version
+        if: inputs.version != ''
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: npm version "$RELEASE_VERSION" --no-git-tag-version
       - name: Package Linux app
         run: npm run package:linux
       - name: Upload Linux artifact
