@@ -1,6 +1,7 @@
 body {
   margin: 0;
   max-width: 100vw;
+  font-family: system-ui, sans-serif;
 }
 
 pre,
@@ -8,11 +9,42 @@ code {
   overflow: auto;
 }
 
+button,
+input {
+  font: inherit;
+}
+
+#projectBar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 52px;
+  padding: 0.65rem 1rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid #d9d9d9;
+}
+
+#projectName {
+  font-weight: 700;
+}
+
+#saveStatus {
+  flex: 1;
+  color: #5f6368;
+  font-size: 0.9rem;
+}
+
+#saveStatus.error,
+#projectNameError,
+#projectListStatus.error {
+  color: #b3261e;
+}
+
 #pageContainer {
   display: flex;
   width: 100%;
   max-width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 52px);
 }
 
 #blocklyDiv {
@@ -37,4 +69,69 @@ code {
 
 #output {
   height: 50%;
+}
+
+dialog {
+  width: min(360px, calc(100vw - 2rem));
+  border: 0;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 25%);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 35%);
+}
+
+#projectNameForm,
+#openProjectPanel {
+  display: grid;
+  gap: 0.65rem;
+}
+
+#projectNameForm h2,
+#projectNameForm p,
+#openProjectPanel h2,
+#openProjectPanel p {
+  margin: 0;
+}
+
+#projectNameInput {
+  padding: 0.45rem;
+}
+
+#projectNameError {
+  min-height: 1.2rem;
+  font-size: 0.9rem;
+}
+
+#projectList {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.projectListItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+}
+
+.projectListButton,
+.deleteProjectButton {
+  padding: 0.65rem;
+}
+
+.projectListButton {
+  text-align: left;
+}
+
+.deleteProjectButton {
+  color: #b3261e;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
