@@ -20,11 +20,18 @@ mathGenerators['math_arithmetic'] = function (
       Order.FUNCTION_CALL,
     ];
   }
+  if (operation === 'DIVIDE') {
+    const dividend = value(block, generator, 'A', Order.NONE);
+    const divisor = value(block, generator, 'B', Order.NONE);
+    return [
+      '(double)(' + dividend + ') / (' + divisor + ')',
+      Order.MULTIPLICATIVE,
+    ];
+  }
   const operators: Record<string, [string, Order]> = {
     ADD: ['+', Order.ADDITIVE],
     MINUS: ['-', Order.ADDITIVE],
     MULTIPLY: ['*', Order.MULTIPLICATIVE],
-    DIVIDE: ['/', Order.MULTIPLICATIVE],
   };
   const [operator, order] = operators[operation] ?? operators.ADD;
   return [
