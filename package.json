@@ -23,7 +23,7 @@
   },
   "build": {
     "appId": "com.racecararduinoblocks.app",
-    "productName": "Racecar Arduino Blocks",
+    "productName": "RACECAR Arduino Blocks",
     "directories": {
       "output": "release"
     },
