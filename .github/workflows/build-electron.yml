@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   build-windows:
     name: Windows installer
