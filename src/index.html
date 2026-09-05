@@ -6,6 +6,16 @@
     <link rel="stylesheet" href="./renderer.css" />
   </head>
   <body>
+    <header id="projectBar">
+      <span id="projectName">Untitled project</span>
+      <span id="saveStatus" role="status">
+        Changes will be saved after you name this project.
+      </span>
+      <button id="newProjectButton" type="button">New Project</button>
+      <button id="openProjectButton" type="button">Open Project</button>
+      <button id="saveAsButton" type="button">Save As</button>
+    </header>
+
     <div id="pageContainer">
       <div id="outputPane">
         <pre id="generatedCode"><code></code></pre>
@@ -13,6 +23,39 @@
       </div>
       <div id="blocklyDiv"></div>
     </div>
+
+    <dialog id="projectNameDialog" aria-labelledby="projectDialogTitle">
+      <form id="projectNameForm">
+        <h2 id="projectDialogTitle">Name your project</h2>
+        <p id="projectDialogDescription">
+          Enter a name to save this Blockly workspace.
+        </p>
+        <label for="projectNameInput">Project name</label>
+        <input
+          id="projectNameInput"
+          maxlength="80"
+          required
+          autocomplete="off"
+        />
+        <p id="projectNameError" role="alert"></p>
+        <div class="dialogActions">
+          <button id="cancelProjectName" type="button">Cancel</button>
+          <button type="submit">Save project</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="openProjectDialog" aria-labelledby="openProjectDialogTitle">
+      <section id="openProjectPanel">
+        <h2 id="openProjectDialogTitle">Open a project</h2>
+        <p id="projectListStatus" role="status">Loading projects...</p>
+        <div id="projectList"></div>
+        <div class="dialogActions">
+          <button id="cancelOpenProject" type="button">Cancel</button>
+        </div>
+      </section>
+    </dialog>
+
     <script type="module" src="./renderer.js"></script>
   </body>
 </html>
