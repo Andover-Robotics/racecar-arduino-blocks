@@ -20,7 +20,7 @@ function validateProjectName(projectName) {
     !PROJECT_NAME_PATTERN.test(projectName)
   ) {
     throw new Error(
-      "Project names must be 1-80 letters, numbers, spaces, dots, hyphens, or underscores, and cannot start with a space.",
+      "Project names must be 1-80 characters, must start with a letter or a number, and can otherwise contain letters, numbers, spaces, dots, hyphens, or underscores.",
     );
   }
 
