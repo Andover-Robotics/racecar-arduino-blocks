@@ -5,6 +5,7 @@ type ProjectDialogMode = "create" | "save-as";
 let activeProject: Pick<SavedProject, "id" | "name"> | null = null;
 let autosaveTimer: number | undefined;
 let saveInProgress: Promise<boolean> | null = null;
+let followUpSaveRequested = false;
 let isLoadingProject = true;
 let isApplyingProject = false;
 let hasChangesDuringLoad = false;
@@ -109,18 +110,29 @@ export async function setupProjectPersistence(
     return false;
   }
 
-  async function saveActiveProject(): Promise<boolean> {
-    if (saveInProgress) {
-      return saveInProgress;
-    }
-
-    saveInProgress = performProjectSave();
+  async function drainSaveQueue(): Promise<boolean> {
+    let latestSaveSucceeded = true;
 
     try {
-      return await saveInProgress;
+      while (followUpSaveRequested) {
+        followUpSaveRequested = false;
+        latestSaveSucceeded = await performProjectSave();
+      }
+
+      return latestSaveSucceeded;
     } finally {
       saveInProgress = null;
     }
+  }
+
+  function saveActiveProject(): Promise<boolean> {
+    followUpSaveRequested = true;
+
+    if (!saveInProgress) {
+      saveInProgress = drainSaveQueue();
+    }
+
+    return saveInProgress;
   }
 
   function performAutosave() {
