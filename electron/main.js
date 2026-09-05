@@ -236,7 +236,11 @@ async function clearApplicationStateForProject(projectId) {
     throw error;
   }
 
-  if (applicationState.lastProjectId === projectId) {
+  if (
+    applicationState &&
+    typeof applicationState === "object" &&
+    applicationState.lastProjectId === projectId
+  ) {
     await fs.rm(applicationStateFile, { force: true });
   }
 }
