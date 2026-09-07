@@ -16,9 +16,9 @@
   "author": "",
   "license": "Apache-2.0",
   "devDependencies": {
-    "electron": "^37.2.6",
-    "esbuild": "^0.25.9",
+    "electron": "^44.2.0",
     "electron-builder": "^26.0.12",
+    "esbuild": "^0.25.9",
     "typescript": "^6.0.3"
   },
   "build": {
@@ -33,13 +33,18 @@
       "package.json"
     ],
     "linux": {
-      "target": ["AppImage"]
+      "target": [
+        "AppImage"
+      ]
     },
     "win": {
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     }
   },
   "dependencies": {
-    "blockly": "^13.2.0"
+    "blockly": "^13.2.0",
+    "svelte": "^5.57.0"
   }
 }
