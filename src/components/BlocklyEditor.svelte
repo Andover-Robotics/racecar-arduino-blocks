@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import * as Blockly from "blockly";
+  import ArduinoUpload from "./ArduinoUpload.svelte";
   import { blocks } from "../blocks/text";
   import { arduinoGenerator, forBlock } from "../generators/arduino";
   import { toolbox } from "../toolbox";
@@ -22,7 +23,7 @@
 <main>
   <div class="outputPane">
     <pre><code>{generatedCode}</code></pre>
-    <div class="output"></div>
+    <ArduinoUpload {generatedCode} />
   </div>
   <div class="blocklyContainer" bind:this={blocklyContainer}></div>
 </main>
@@ -44,14 +45,15 @@
     flex-direction: column;
     width: 400px;
     flex: 0 0 400px;
-    overflow: auto;
+    overflow: hidden;
     margin: 1rem;
   }
   pre {
-    height: 50%;
+    flex: 1 1 50%;
+    min-height: 0;
+    margin: 0 0 0.75rem;
     overflow: auto;
     background-color: rgb(247, 240, 228);
   }
   code { overflow: auto; }
-  .output { height: 50%; }
 </style>

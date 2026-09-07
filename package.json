@@ -6,9 +6,12 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build.mjs",
-    "start": "npm run build && electron .",
-    "package:linux": "npm run build && electron-builder --linux AppImage --x64",
-    "package:windows": "npm run build && electron-builder --win nsis --x64"
+    "prepare:arduino": "node scripts/prepare-arduino.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test",
+    "start": "npm run prepare:arduino && npm run build && electron .",
+    "package:linux": "npm run prepare:arduino && node scripts/assert-arduino-toolchain.mjs linux-x64 && npm run build && electron-builder --linux AppImage --x64",
+    "package:windows": "npm run prepare:arduino && node scripts/assert-arduino-toolchain.mjs win32-x64 && npm run build && electron-builder --win nsis --x64"
   },
   "keywords": [
     "blockly"
@@ -16,9 +19,11 @@
   "author": "",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@electron-internal/extract-zip": "^1.0.5",
     "electron": "^44.2.0",
     "electron-builder": "^26.0.12",
     "esbuild": "^0.25.9",
+    "tar": "^7.5.22",
     "typescript": "^6.0.3"
   },
   "build": {
@@ -35,11 +40,23 @@
     "linux": {
       "target": [
         "AppImage"
+      ],
+      "extraResources": [
+        {
+          "from": "vendor/arduino/linux-x64",
+          "to": "arduino"
+        }
       ]
     },
     "win": {
       "target": [
         "nsis"
+      ],
+      "extraResources": [
+        {
+          "from": "vendor/arduino/win32-x64",
+          "to": "arduino"
+        }
       ]
     }
   },

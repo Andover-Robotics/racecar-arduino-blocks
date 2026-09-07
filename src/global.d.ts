@@ -27,7 +27,47 @@ interface DeleteProjectResult {
   deletedProjectId?: string;
 }
 
+interface ArduinoPort {
+  address: string;
+  label: string;
+}
+
+interface ArduinoPortResult {
+  ok: boolean;
+  error?: string;
+  ports?: ArduinoPort[];
+}
+
+interface ArduinoUploadRequest {
+  code: string;
+  port: string;
+}
+
+interface ArduinoUploadResult {
+  ok: boolean;
+  error?: string;
+}
+
+interface ArduinoUploadEvent {
+  type: "phase" | "output";
+  phase?:
+    | "preparing"
+    | "checking"
+    | "compiling"
+    | "uploading"
+    | "success"
+    | "error";
+  message?: string;
+  stream?: "stdout" | "stderr";
+  text?: string;
+}
+
 interface Window {
+  arduino: {
+    listPorts(): Promise<ArduinoPortResult>;
+    uploadSketch(request: ArduinoUploadRequest): Promise<ArduinoUploadResult>;
+    onUploadEvent(listener: (event: ArduinoUploadEvent) => void): () => void;
+  };
   projects: {
     loadLastProject(): Promise<ProjectResult>;
     listProjects(): Promise<ProjectListResult>;

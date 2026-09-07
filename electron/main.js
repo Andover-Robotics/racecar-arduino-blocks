@@ -1,6 +1,10 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const {
+  createArduinoService,
+  normalizeCliError,
+} = require("./arduino-service");
 
 const PROJECT_FILE_VERSION = 1;
 const PROJECT_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 ._-]{0,79}$/;
@@ -280,6 +284,35 @@ ipcMain.handle("projects:create", handleCreateProject);
 ipcMain.handle("projects:save-as", handleCreateProject);
 ipcMain.handle("projects:save", handleSaveProject);
 
+const arduinoService = createArduinoService({ app });
+
+ipcMain.handle("arduino:list-ports", async function handleArduinoPorts() {
+  try {
+    return { ok: true, ports: await arduinoService.listPorts() };
+  } catch (error) {
+    console.error("Arduino port discovery failed.", error);
+    return {
+      ok: false,
+      error: normalizeCliError(
+        error?.cliStage ?? "discovery",
+        error?.cliOutput,
+        error,
+      ),
+    };
+  }
+});
+
+ipcMain.handle(
+  "arduino:upload",
+  function handleArduinoUpload(event, request) {
+    return arduinoService.uploadSketch(request, (uploadEvent) => {
+      if (!event.sender.isDestroyed()) {
+        event.sender.send("arduino:upload-event", uploadEvent);
+      }
+    });
+  },
+);
+
 function createWindow() {
   const window = new BrowserWindow({
     width: 1280,
@@ -303,6 +336,9 @@ function handleActivate() {
 }
 
 function handleApplicationReady() {
+  void arduinoService.ensureToolchain().catch((error) => {
+    console.error("Bundled Arduino toolchain preparation failed.", error);
+  });
   createWindow();
   app.on("activate", handleActivate);
 }
@@ -314,4 +350,5 @@ function handleAllWindowsClosed() {
 }
 
 app.whenReady().then(handleApplicationReady);
+app.on("before-quit", () => arduinoService.dispose());
 app.on("window-all-closed", handleAllWindowsClosed);
