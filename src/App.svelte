@@ -29,6 +29,7 @@
   let projectListStatusIsError = false;
   let projectActionsBusy = false;
   let autosaveTimer: number | undefined;
+  let projectSaveQueue: Promise<void> = Promise.resolve();
   let saveInProgress: Promise<boolean> | null = null;
   let followUpSaveRequested = false;
   let isLoadingProject = true;
@@ -68,14 +69,26 @@
     }
   }
 
+  function serializeProjectSave<Result>(
+    operation: () => Promise<Result>,
+  ): Promise<Result> {
+    const result = projectSaveQueue.then(operation, operation);
+    projectSaveQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+
   async function performProjectSave(): Promise<boolean> {
     if (!activeProject) return true;
     setSaveStatus("Saving...");
 
     try {
-      const saveResult = await window.projects.saveProject(
-        activeProject.id,
-        serializeWorkspace(),
+      const projectId = activeProject.id;
+      const workspaceState = serializeWorkspace();
+      const saveResult = await serializeProjectSave(() =>
+        window.projects.saveProject(projectId, workspaceState),
       );
       if (saveResult.ok) {
         setSaveStatus("All changes saved");
@@ -252,9 +265,12 @@
     mode: ProjectDialogMode,
     name: string,
   ): Promise<string | null> {
-    const result = mode === "create"
-      ? await window.projects.createProject(name, serializeWorkspace())
-      : await window.projects.saveProjectAs(name, serializeWorkspace());
+    const workspaceState = serializeWorkspace();
+    const result = await serializeProjectSave(() =>
+      mode === "create"
+        ? window.projects.createProject(name, workspaceState)
+        : window.projects.saveProjectAs(name, workspaceState),
+    );
     if (!result.ok || !result.project) {
       return result.error ?? "Unable to save project.";
     }
