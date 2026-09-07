@@ -61,13 +61,27 @@
   async function performProjectSave(): Promise<boolean> {
     if (!activeProject) return true;
     setSaveStatus("Saving...");
-    const saveResult = await window.projects.saveProject(activeProject.id, serializeWorkspace());
-    if (saveResult.ok) {
-      setSaveStatus("All changes saved");
-      return true;
+
+    try {
+      const saveResult = await window.projects.saveProject(
+        activeProject.id,
+        serializeWorkspace(),
+      );
+      if (saveResult.ok) {
+        setSaveStatus("All changes saved");
+        return true;
+      }
+
+      setSaveStatus(saveResult.error ?? "Unable to save project.", true);
+      return false;
+    } catch (error) {
+      console.error("Could not save the active project.", error);
+      setSaveStatus(
+        error instanceof Error ? error.message : "Unable to save project.",
+        true,
+      );
+      return false;
     }
-    setSaveStatus(saveResult.error ?? "Unable to save project.", true);
-    return false;
   }
 
   async function drainSaveQueue(): Promise<boolean> {
