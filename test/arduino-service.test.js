@@ -183,4 +183,27 @@ test("seeds the offline data and serializes upload commands", async (context) =>
     (await fs.readdir(temporary)).some((name) => name.startsWith("racecar-arduino-")),
     false,
   );
+
+  let terminationSignals = [];
+  function hungSpawnProcess() {
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.kill = (signal) => terminationSignals.push(signal);
+    return child;
+  }
+  const hungService = createArduinoService({
+    app,
+    spawnProcess: hungSpawnProcess,
+    platform: "linux",
+    arch: "x64",
+    cliTimeouts: { discovery: 1, compile: 1, upload: 1 },
+    timeoutTerminationGraceMs: 1,
+  });
+  await assert.rejects(hungService.listPorts(), { code: "ETIMEDOUT" });
+  assert.deepEqual(terminationSignals, ["SIGTERM", "SIGKILL"]);
+  assert.deepEqual(await hungService.uploadSketch({ code: "x", port: "COM3" }), {
+    ok: false,
+    error: "Arduino discovery timed out. Reconnect the board and try again.",
+  });
 });

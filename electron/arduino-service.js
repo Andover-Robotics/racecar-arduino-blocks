@@ -6,6 +6,12 @@ const manifest = require("./arduino-toolchain.json");
 
 const MAX_CODE_LENGTH = 1024 * 1024;
 const MAX_CAPTURED_OUTPUT = 256 * 1024;
+const DEFAULT_CLI_TIMEOUTS = Object.freeze({
+  discovery: 15_000,
+  compile: 120_000,
+  upload: 90_000,
+});
+const TIMEOUT_TERMINATION_GRACE_MS = 2_000;
 
 function platformDirectory(platform = process.platform, arch = process.arch) {
   const key = `${platform}-${arch}`;
@@ -124,6 +130,43 @@ function normalizeCliError(stage, output, error) {
   return details || "Arduino CLI could not complete the request.";
 }
 
+function terminateProcessTree(child, platform, signal) {
+  if (!child) return;
+
+  const pid = child.pid;
+  if (platform === "win32" && Number.isInteger(pid) && pid > 0) {
+    // taskkill's /T includes any compiler/uploader children spawned by the CLI.
+    const terminator = spawn("taskkill", ["/pid", String(pid), "/T", "/F"], {
+      windowsHide: true,
+      stdio: "ignore",
+    });
+    terminator.on("error", () => {
+      try {
+        child.kill(signal);
+      } catch {
+        // The process may already be gone.
+      }
+    });
+    return;
+  }
+
+  try {
+    // CLI processes are launched detached on POSIX, so their descendants share a group.
+    if (Number.isInteger(pid) && pid > 0) {
+      process.kill(-pid, signal);
+      return;
+    }
+  } catch {
+    // Fall back to the direct child below when it has already left its group.
+  }
+
+  try {
+    child.kill(signal);
+  } catch {
+    // The process may already be gone.
+  }
+}
+
 async function readJson(fileSystem, filePath) {
   try {
     return JSON.parse(await fileSystem.readFile(filePath, "utf8"));
@@ -139,6 +182,8 @@ function createArduinoService({
   platform = process.platform,
   arch = process.arch,
   resourcesPath = process.resourcesPath,
+  cliTimeouts = DEFAULT_CLI_TIMEOUTS,
+  timeoutTerminationGraceMs = TIMEOUT_TERMINATION_GRACE_MS,
 } = {}) {
   const platformKey = platformDirectory(platform, arch);
   const platformManifest = manifest.platforms[platformKey];
@@ -288,11 +333,13 @@ function createArduinoService({
       let timedOut = false;
       let child;
       let timer;
+      let terminationTimer;
 
       const finish = (action) => {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
+        clearTimeout(terminationTimer);
         if (child) children.delete(child);
         action();
       };
@@ -302,6 +349,7 @@ function createArduinoService({
           env: cliEnvironment(root),
           shell: false,
           windowsHide: true,
+          detached: platform !== "win32",
         });
         children.add(child);
       } catch (error) {
@@ -311,7 +359,19 @@ function createArduinoService({
 
       timer = setTimeout(() => {
         timedOut = true;
-        child.kill();
+        terminateProcessTree(child, platform, "SIGTERM");
+        terminationTimer = setTimeout(() => {
+          terminateProcessTree(child, platform, "SIGKILL");
+          finish(() =>
+            reject(
+              Object.assign(new Error("Arduino CLI timed out."), {
+                code: "ETIMEDOUT",
+                cliStage: stage,
+                cliOutput: stderr || stdout,
+              }),
+            ),
+          );
+        }, timeoutTerminationGraceMs);
       }, timeoutMs);
 
       child.stdout?.on("data", (chunk) => {
@@ -363,7 +423,7 @@ function createArduinoService({
   async function listPorts() {
     const result = await runCli(["board", "list", "--json"], {
       stage: "discovery",
-      timeoutMs: 15_000,
+      timeoutMs: cliTimeouts.discovery,
     });
     return parseDetectedPorts(result.stdout);
   }
@@ -407,14 +467,14 @@ function createArduinoService({
       await runCli(compileArguments(sketchDirectory, buildDirectory), {
         emit,
         stage: "compile",
-        timeoutMs: 120_000,
+        timeoutMs: cliTimeouts.compile,
       });
 
       emit({ type: "phase", phase: "uploading", message: `Uploading to ${request.port}…` });
       await runCli(uploadArguments(request.port, sketchDirectory, buildDirectory), {
         emit,
         stage: "upload",
-        timeoutMs: 90_000,
+        timeoutMs: cliTimeouts.upload,
       });
 
       emit({ type: "phase", phase: "success", message: "Upload complete." });
