@@ -58,6 +58,15 @@
     }
   }
 
+  function runWithoutBlocklyEvents(action: () => void) {
+    Blockly.Events.disable();
+    try {
+      action();
+    } finally {
+      Blockly.Events.enable();
+    }
+  }
+
   async function performProjectSave(): Promise<boolean> {
     if (!activeProject) return true;
     setSaveStatus("Saving...");
@@ -157,7 +166,12 @@
     }
     isApplyingProject = true;
     try {
-      Blockly.serialization.workspaces.load(openResult.project.workspace, workspace);
+      runWithoutBlocklyEvents(() => {
+        Blockly.serialization.workspaces.load(
+          openResult.project!.workspace,
+          workspace!,
+        );
+      });
       activeProject = openResult.project;
       projectName = activeProject.name;
       setSaveStatus("All changes saved");
@@ -180,7 +194,7 @@
     }
     isApplyingProject = true;
     try {
-      workspace.clear();
+      runWithoutBlocklyEvents(() => workspace!.clear());
       activeProject = null;
       projectName = "Untitled project";
       setSaveStatus("Make a change to name this project and start autosaving.");
@@ -250,7 +264,12 @@
     } else if (loadResult.project) {
       isApplyingProject = true;
       try {
-        Blockly.serialization.workspaces.load(loadResult.project.workspace, workspace);
+        runWithoutBlocklyEvents(() => {
+          Blockly.serialization.workspaces.load(
+            loadResult.project!.workspace,
+            workspace!,
+          );
+        });
         activeProject = loadResult.project;
         projectName = activeProject.name;
         setSaveStatus("All changes saved");
