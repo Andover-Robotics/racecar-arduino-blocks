@@ -6,7 +6,7 @@
   import { toolbox } from "../toolbox";
 
   export let generatedCode: string;
-  export let onWorkspaceReady: (workspace: Blockly.Workspace) => void;
+  export let onWorkspaceReady: (workspace: Blockly.WorkspaceSvg) => void;
 
   let blocklyContainer: HTMLDivElement;
 

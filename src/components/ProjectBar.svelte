@@ -2,6 +2,7 @@
   export let projectName: string;
   export let saveStatus: string;
   export let saveStatusIsError: boolean;
+  export let busy: boolean;
   export let onNewProject: () => void;
   export let onOpenProject: () => void;
   export let onSaveAs: () => void;
@@ -10,9 +11,9 @@
 <header>
   <span class="projectName">{projectName}</span>
   <span class:error={saveStatusIsError} class="saveStatus" role="status">{saveStatus}</span>
-  <button type="button" onclick={onNewProject}>New Project</button>
-  <button type="button" onclick={onOpenProject}>Open Project</button>
-  <button type="button" onclick={onSaveAs}>Save As</button>
+  <button type="button" disabled={busy} onclick={onNewProject}>New Project</button>
+  <button type="button" disabled={busy} onclick={onOpenProject}>Open Project</button>
+  <button type="button" disabled={busy} onclick={onSaveAs}>Save As</button>
 </header>
 
 <style>

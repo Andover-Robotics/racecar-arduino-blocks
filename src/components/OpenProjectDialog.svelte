@@ -2,6 +2,7 @@
   export let projects: ProjectSummary[];
   export let status: string;
   export let statusIsError: boolean;
+  export let busy: boolean;
   export let onOpen: (projectId: string) => void;
   export let onDelete: (projectId: string) => void;
 
@@ -17,14 +18,14 @@
 </script>
 
 <dialog bind:this={dialog} aria-labelledby="openProjectDialogTitle">
-  <section>
+  <section aria-busy={busy}>
     <h2 id="openProjectDialogTitle">Open a project</h2>
     <p class:error={statusIsError} role="status">{status}</p>
     <div class="projectList">
       {#each projects as project (project.id)}
         <div class="projectListItem">
-          <button type="button" class="projectListButton" onclick={() => onOpen(project.id)}>{project.name}</button>
-          <button type="button" class="deleteProjectButton" aria-label={"Delete " + project.name} onclick={() => onDelete(project.id)}>Delete</button>
+          <button type="button" class="projectListButton" disabled={busy} onclick={() => onOpen(project.id)}>{project.name}</button>
+          <button type="button" class="deleteProjectButton" disabled={busy} aria-label={"Delete " + project.name} onclick={() => onDelete(project.id)}>Delete</button>
         </div>
       {/each}
     </div>

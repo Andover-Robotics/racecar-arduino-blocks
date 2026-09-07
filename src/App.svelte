@@ -18,7 +18,7 @@
 
   let projectNameDialog: ProjectNameDialogHandle;
   let openProjectDialog: OpenProjectDialogHandle;
-  let workspace: Blockly.Workspace | null = null;
+  let workspace: Blockly.WorkspaceSvg | null = null;
   let activeProject: Pick<SavedProject, "id" | "name"> | null = null;
   let projectName = "Untitled project";
   let saveStatus = "Changes will be saved after you name this project.";
@@ -27,6 +27,7 @@
   let projects: ProjectSummary[] = [];
   let projectListStatus = "Loading projects...";
   let projectListStatusIsError = false;
+  let projectActionsBusy = false;
   let autosaveTimer: number | undefined;
   let saveInProgress: Promise<boolean> | null = null;
   let followUpSaveRequested = false;
@@ -151,37 +152,58 @@
   }
 
   async function openSelectedProject(projectId: string) {
-    if (!workspace) return;
-    if (!(await flushPendingAutosave())) {
-      setProjectListStatus("The current project could not be saved, so it was not replaced.", true);
-      return;
-    }
-    if (!activeProject && workspace.getAllBlocks(false).length > 0 && !window.confirm("The current workspace has not been saved. Open another project and discard it?")) return;
+    if (projectActionsBusy || !workspace) return;
 
-    setProjectListStatus("Opening project...");
-    const openResult = await window.projects.openProject(projectId);
-    if (!openResult.ok || !openResult.project) {
-      setProjectListStatus(openResult.error ?? "Unable to open the selected project.", true);
-      return;
-    }
-    isApplyingProject = true;
+    projectActionsBusy = true;
     try {
-      runWithoutBlocklyEvents(() => {
-        Blockly.serialization.workspaces.load(
-          openResult.project!.workspace,
-          workspace!,
+      if (!(await flushPendingAutosave())) {
+        setProjectListStatus(
+          "The current project could not be saved, so it was not replaced.",
+          true,
         );
-      });
-      activeProject = openResult.project;
-      projectName = activeProject.name;
-      setSaveStatus("All changes saved");
-      regenerateCode();
-      openProjectDialog.close();
-    } catch (error) {
-      console.error("Could not open Blockly workspace.", error);
-      setProjectListStatus("The selected project could not be loaded.", true);
+        return;
+      }
+      if (
+        !activeProject &&
+        workspace.getAllBlocks(false).length > 0 &&
+        !window.confirm(
+          "The current workspace has not been saved. Open another project and discard it?",
+        )
+      ) {
+        return;
+      }
+
+      setProjectListStatus("Opening project...");
+      const openResult = await window.projects.openProject(projectId);
+      if (!openResult.ok || !openResult.project) {
+        setProjectListStatus(
+          openResult.error ?? "Unable to open the selected project.",
+          true,
+        );
+        return;
+      }
+
+      isApplyingProject = true;
+      try {
+        runWithoutBlocklyEvents(() => {
+          Blockly.serialization.workspaces.load(
+            openResult.project!.workspace,
+            workspace!,
+          );
+        });
+        activeProject = openResult.project;
+        projectName = activeProject.name;
+        setSaveStatus("All changes saved");
+        regenerateCode();
+        openProjectDialog.close();
+      } catch (error) {
+        console.error("Could not open Blockly workspace.", error);
+        setProjectListStatus("The selected project could not be loaded.", true);
+      } finally {
+        isApplyingProject = false;
+      }
     } finally {
-      isApplyingProject = false;
+      projectActionsBusy = false;
     }
   }
 
@@ -285,7 +307,7 @@
     if (hasChangesDuringLoad) scheduleAutosave();
   }
 
-  function handleWorkspaceReady(nextWorkspace: Blockly.Workspace) {
+  function handleWorkspaceReady(nextWorkspace: Blockly.WorkspaceSvg) {
     workspace = nextWorkspace;
     workspace.addChangeListener(handleCodeGeneration);
     workspace.addChangeListener(handleWorkspaceChange);
@@ -316,6 +338,7 @@
   {projectName}
   {saveStatus}
   {saveStatusIsError}
+  busy={projectActionsBusy}
   onNewProject={() => void startNewProject()}
   onOpenProject={() => void showOpenProjectDialog()}
   onSaveAs={() => void projectNameDialog.show("save-as", activeProject?.name ?? "")}
@@ -334,6 +357,7 @@
   {projects}
   status={projectListStatus}
   statusIsError={projectListStatusIsError}
+  busy={projectActionsBusy}
   onOpen={(projectId) => void openSelectedProject(projectId)}
   onDelete={(projectId) => void deleteSelectedProject(projectId)}
 />
