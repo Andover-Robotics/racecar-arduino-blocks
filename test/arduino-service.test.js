@@ -206,4 +206,32 @@ test("seeds the offline data and serializes upload commands", async (context) =>
     ok: false,
     error: "Arduino discovery timed out. Reconnect the board and try again.",
   });
+
+  const disposalSignals = [];
+  let resolveSpawned;
+  const spawned = new Promise((resolve) => {
+    resolveSpawned = resolve;
+  });
+  function disposableSpawnProcess() {
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.kill = (signal) => {
+      disposalSignals.push(signal);
+      child.emit("close", null);
+    };
+    resolveSpawned();
+    return child;
+  }
+  const disposableService = createArduinoService({
+    app,
+    spawnProcess: disposableSpawnProcess,
+    platform: "linux",
+    arch: "x64",
+  });
+  const pendingDiscovery = disposableService.listPorts();
+  await spawned;
+  disposableService.dispose();
+  await assert.rejects(pendingDiscovery, /exited with code null/);
+  assert.deepEqual(disposalSignals, ["SIGTERM"]);
 });

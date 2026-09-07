@@ -501,7 +501,9 @@ function createArduinoService({
   }
 
   function dispose() {
-    for (const child of children) child.kill();
+    for (const child of children) {
+      terminateProcessTree(child, platform, "SIGTERM");
+    }
     children.clear();
   }
 
