@@ -1,4 +1,5 @@
 import { access, readFile } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,6 +24,9 @@ if (!platform) {
 }
 
 const root = path.join(repositoryRoot, "vendor", "arduino", platformKey);
+const executableAccessMode = platformKey.startsWith("win32-")
+  ? fsConstants.F_OK
+  : fsConstants.X_OK;
 const stagedManifest = JSON.parse(
   await readFile(path.join(root, "seed-manifest.json"), "utf8"),
 );
@@ -30,7 +34,7 @@ if (JSON.stringify(stagedManifest) !== JSON.stringify(manifest)) {
   throw new Error(`The staged Arduino toolchain for ${platformKey} is out of date.`);
 }
 
-await access(path.join(root, "cli", platform.executable));
+await access(path.join(root, "cli", platform.executable), executableAccessMode);
 await access(
   path.join(
     root,

@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
+import { constants as fsConstants } from "node:fs";
 import {
   access,
   chmod,
@@ -45,6 +46,9 @@ const stagingRoot = path.join(
 );
 const executablePath = path.join(stagingRoot, "cli", platform.executable);
 const seedManifestPath = path.join(stagingRoot, "seed-manifest.json");
+const executableAccessMode = platformKey.startsWith("win32-")
+  ? fsConstants.F_OK
+  : fsConstants.X_OK;
 
 async function sha256(filePath) {
   const contents = await readFile(filePath);
@@ -98,7 +102,7 @@ function runCli(args, environment) {
 async function stagingIsReady() {
   try {
     const stagedManifest = JSON.parse(await readFile(seedManifestPath, "utf8"));
-    await access(executablePath);
+    await access(executablePath, executableAccessMode);
     await access(
       path.join(
         stagingRoot,
