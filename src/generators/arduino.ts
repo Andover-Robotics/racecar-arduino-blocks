@@ -107,6 +107,12 @@ const RESERVED_WORDS = [
   ],
 ].map((group) => group.join(',')).join(',');
 
+const CODE_ROOT_BLOCK_TYPES = new Set([
+  'arduino_setup',
+  'procedures_defnoreturn',
+  'procedures_defreturn',
+]);
+
 class ArduinoGenerator extends Blockly.CodeGenerator {
   private variableDeclarations_: string[] = [];
 
@@ -151,6 +157,21 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
     ].filter(Boolean);
     this.isInitialized = false;
     return sections.join('\n\n') + '\n';
+  }
+
+  blockToCode(
+    block: Blockly.Block | null,
+    thisOnly = false,
+  ): string | [string, number] {
+    if (
+      block &&
+      !block.getParent() &&
+      !CODE_ROOT_BLOCK_TYPES.has(block.type)
+    ) {
+      return '';
+    }
+
+    return super.blockToCode(block, thisOnly);
   }
 
   scrub_(
