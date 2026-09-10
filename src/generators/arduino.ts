@@ -5,7 +5,7 @@
  */
 
 import * as Blockly from 'blockly/core';
-import {Order} from './common';
+import {ArduinoCodeGenerator, Order} from './common';
 import {hardwareGenerators} from './hardware';
 import {logicGenerators} from './logic';
 import {loopGenerators} from './loops';
@@ -109,9 +109,13 @@ const RESERVED_WORDS = [
 
 const CODE_ROOT_BLOCK_TYPES = new Set([
   'arduino_setup',
+  'arduino_custom_code',
   'procedures_defnoreturn',
   'procedures_defreturn',
 ]);
+
+const setupFunction = (statements = '') =>
+  'void setup() {\n  Serial.begin(9600);\n' + statements + '}';
 
 class ArduinoGenerator extends Blockly.CodeGenerator {
   private variableDeclarations_: string[] = [];
@@ -128,6 +132,7 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
     this.nameDB_.populateVariables(workspace);
     this.nameDB_.populateProcedures(workspace);
     this.definitions_ = Object.create(null);
+    this.definitions_['setup'] = setupFunction();
     this.functionNames_ = Object.create(null);
     this.variableDeclarations_ = workspace
       .getVariableMap().getAllVariables()
@@ -151,8 +156,8 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
     const sections = [
       '#include <Arduino.h>',
       this.variableDeclarations_.join('\n'),
-      Object.keys(this.definitions_).map((key) => this.definitions_[key]).join('\n\n'),
       code.trim(),
+      Object.keys(this.definitions_).map((key) => this.definitions_[key]).join('\n\n'),
       loop,
     ].filter(Boolean);
     this.isInitialized = false;
@@ -207,10 +212,18 @@ export const forBlock = Object.assign(
 
 forBlock['arduino_setup'] = function (
   block: Blockly.Block,
-  generator: Blockly.CodeGenerator,
+  generator: ArduinoCodeGenerator,
 ) {
   const statements = generator.statementToCode(block, 'DO');
-  return 'void setup() {\n  Serial.begin(9600);\n' + statements + '}\n';
+  generator.addDefinition('setup', setupFunction(statements));
+  return null;
+};
+
+forBlock['arduino_custom_code'] = function (block: Blockly.Block) {
+  const code = String(block.getFieldValue('CODE') ?? '')
+    .replace(/\r\n?/g, '\n')
+    .replace(/\n*$/, '');
+  return code ? code + '\n' : '';
 };
 
 arduinoGenerator.ORDER_OVERRIDES = [
