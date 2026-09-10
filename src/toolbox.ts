@@ -25,6 +25,10 @@ export const toolbox = {
         },
         {
           kind: 'block',
+          type: 'arduino_custom_code',
+        },
+        {
+          kind: 'block',
           type: 'arduino_pin_mode',
           inputs: {PIN: {shadow: {type: 'math_number', fields: {NUM: 13}}}},
         },

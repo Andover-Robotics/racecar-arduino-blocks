@@ -61,6 +61,7 @@
     }
   },
   "dependencies": {
+    "@blockly/field-multilineinput": "^13.2.0",
     "blockly": "^13.2.0",
     "svelte": "^5.57.0"
   }

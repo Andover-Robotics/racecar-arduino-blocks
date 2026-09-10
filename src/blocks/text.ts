@@ -5,6 +5,13 @@
  */
 
 import * as Blockly from 'blockly/core';
+import {
+  FieldMultilineInput,
+  registerFieldMultilineInput,
+} from '@blockly/field-multilineinput';
+
+registerFieldMultilineInput();
+FieldMultilineInput.enterCommits = false;
 
 const statementConnections = {
   previousStatement: null,
@@ -17,6 +24,24 @@ const arduinoSetup = {
   args0: [{type: 'input_statement', name: 'DO'}],
   colour: 230,
   tooltip: 'Runs once when the Arduino starts.',
+  helpUrl: '',
+};
+
+const customCode = {
+  type: 'arduino_custom_code',
+  message0: 'custom code %1',
+  args0: [
+    {
+      type: 'field_multilinetext',
+      name: 'CODE',
+      text: '// Enter Arduino code',
+      spellcheck: false,
+      maxLines: 12,
+    },
+  ],
+  ...statementConnections,
+  colour: 230,
+  tooltip: 'Adds Arduino code exactly where this block is placed.',
   helpUrl: '',
 };
 
@@ -203,6 +228,7 @@ const numberProperty = {
 };
 export const blocks = Blockly.common.createBlockDefinitionsFromJsonArray([
   arduinoSetup,
+  customCode,
   pinMode,
   digitalWrite,
   digitalRead,
