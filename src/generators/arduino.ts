@@ -155,8 +155,8 @@ class ArduinoGenerator extends Blockly.CodeGenerator {
     ].join('\n');
     const sections = [
       '#include <Arduino.h>',
-      code.trim(),
       this.variableDeclarations_.join('\n'),
+      code.trim(),
       Object.keys(this.definitions_).map((key) => this.definitions_[key]).join('\n\n'),
       loop,
     ].filter(Boolean);
